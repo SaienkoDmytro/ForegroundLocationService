@@ -78,8 +78,14 @@ public class MainActivity extends AppCompatActivity {
                 String x = "" + latitude;
                 String y = "" + longitude;
 
-                DataModel obj = new DataModel(x, y);
-                locations.add(obj);
+                if (locations.size() <= 50) {
+                    DataModel obj = new DataModel(x, y);
+                    locations.add(obj);
+                } else {
+                    locations.remove(1);
+                    DataModel obj = new DataModel(x, y);
+                    locations.add(obj);
+                }
                 mRecyclerAdapter.notifyData(locations);
             }
         };
