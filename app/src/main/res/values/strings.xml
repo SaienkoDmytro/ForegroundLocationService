@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">ForegroundLocationService</string>
+
+    <string name="alerttitle">Enable GPS</string>
+    <string name="alert_positive">Enable</string>
+    <string name="alert_negative">Cancel</string>
+    <string name="latitude">latitude</string>
+    <string name="longitude">longitude</string>
+    <string name="alertstart">Permissions not granted!</string>
+
+</resources>
