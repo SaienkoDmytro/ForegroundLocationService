@@ -1,11 +1,5 @@
 package com.example.foregroundlocationservice;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.Manifest;
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
@@ -17,7 +11,16 @@ import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
-import android.util.Log;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
@@ -26,11 +29,14 @@ public class MainActivity extends AppCompatActivity {
 
     public final static String PARAM_LATITUDE = "LATI";
     public final static String PARAM_LONGITUDE = "LONGI";
+    public final static String LOCATIONS_KEY = "LOCATIONS";
     public final static String BROADCAST_ACTION = "com.example.foregroundlocationservice";
 
     private BroadcastReceiver broadcastReceiver;
     private RecyclerAdapter mRecyclerAdapter;
     private final ArrayList<DataModel> locations = new ArrayList<>();
+
+    private final Gson gson = new Gson();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,8 +92,8 @@ public class MainActivity extends AppCompatActivity {
                     DataModel obj = new DataModel(x, y);
                     locations.add(obj);
                 }
-                mRecyclerAdapter.notifyData(locations);
-            }
+                locationAdapter.notifyData(locations);
+             }
         };
         // create BroadcastReceiver filter
         IntentFilter intentFilter = new IntentFilter(BROADCAST_ACTION);
@@ -147,6 +153,16 @@ private boolean checkLocationEnableOrNot() {
         if (!checkLocationEnableOrNot()) {
             stopService(new Intent(this, LocationService.class));
         }
+    }
+
+    private void saveLocations(){
+        String locationsJson = gson.toJson(locations);
+        SharedPref.write(LOCATIONS_KEY, locationsJson);
+    }
+
+    private ArrayList<DataModel> loadLocations(){
+        String locationsJson = SharedPref.read(LOCATIONS_KEY, "");
+        return gson.fromJson(locationsJson, new TypeToken<ArrayList<DataModel>>(){}.getType());
     }
 
 }
