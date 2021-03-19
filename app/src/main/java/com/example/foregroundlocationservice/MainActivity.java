@@ -12,6 +12,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -41,8 +42,6 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        SharedPref.init(getApplicationContext());
-
         RecyclerView mRecyclerView = findViewById(R.id.recycler_set_coordinates_main_activity);
         locationAdapter = new RecyclerAdapter(locations);
         if (loadLocations() != null) {
@@ -54,20 +53,7 @@ public class MainActivity extends AppCompatActivity {
         mRecyclerView.setLayoutManager(layoutManager);
         mRecyclerView.setAdapter(locationAdapter);
 
-        if (grantPermission()) {
-            if (checkLocationEnableOrNot()) {
-                Intent intent = new Intent(this, LocationService.class);
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    startForegroundService(intent);
-                } else {
-                    startService(intent);
-                }
-            } else new AlertDialog.Builder(this)
-                    .setTitle(R.string.alert)
-                    .setCancelable(false)
-                    .setPositiveButton(R.string.ok, (dialog, which) -> grantPermission()).setNegativeButton(R.string.cancel, null)
-                    .show();
-        }
+       conditionsStartInit();
 
         // create BroadcastReceiver
         broadcastReceiver = new BroadcastReceiver() {
@@ -96,6 +82,33 @@ public class MainActivity extends AppCompatActivity {
 
         }
 
+        private void conditionsStartInit() {
+            if (grantPermission()) {
+                if (checkLocationEnableOrNot()) {
+                    Intent intent = new Intent(this, LocationService.class);
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        startForegroundService(intent);
+                    } else {
+                        startService(intent);
+                    }
+                } else new AlertDialog.Builder(this)
+                        .setTitle(R.string.alert)
+                        .setCancelable(false)
+                        .setPositiveButton(R.string.ok, (dialog, which) -> grantPermission()).setNegativeButton(R.string.cancel, null)
+                        .show();
+            }
+        }
+
+        private boolean stopServiceConditions() {
+            LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+            boolean gpsEnable = false;
+            try {
+                gpsEnable = lm.isProviderEnabled(LocationManager.GPS_PROVIDER);
+            } catch (Exception e){
+                e.printStackTrace();
+            }
+            return gpsEnable;
+        }
 
 private boolean checkLocationEnableOrNot() {
     LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
@@ -116,7 +129,7 @@ private boolean checkLocationEnableOrNot() {
         new AlertDialog.Builder(this)
                 .setTitle(R.string.alerttitle)
                 .setCancelable(false)
-                .setPositiveButton(R.string.alert_positive, (dialog, which) -> startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))).setNegativeButton(R.string.alert_negative, null)
+                .setPositiveButton(R.string.alert_positive, (dialog, which) -> startActivityForResult(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS), 1)).setNegativeButton(R.string.alert_negative, null)
                 .show();
         return false;
     } else return true;
@@ -136,7 +149,7 @@ private boolean checkLocationEnableOrNot() {
     protected void onStop() {
         super.onStop();
         saveLocations();
-        if (!checkLocationEnableOrNot()) {
+        if (!stopServiceConditions()) {
             stopService(new Intent(this, LocationService.class));
         }
     }
@@ -151,10 +164,18 @@ private boolean checkLocationEnableOrNot() {
     }
 
     @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 1) {
+            conditionsStartInit();
+        }
+    }
+
+    @Override
     protected void onPause() {
         super.onPause();
         saveLocations();
-        if (!checkLocationEnableOrNot()) {
+        if (!stopServiceConditions()) {
             stopService(new Intent(this, LocationService.class));
         }
     }
