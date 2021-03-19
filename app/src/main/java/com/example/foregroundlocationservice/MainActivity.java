@@ -25,16 +25,14 @@ import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
-    final String LOG_TAG = "myLogs";
-
     public final static String PARAM_LATITUDE = "LATI";
     public final static String PARAM_LONGITUDE = "LONGI";
     public final static String LOCATIONS_KEY = "LOCATIONS";
     public final static String BROADCAST_ACTION = "com.example.foregroundlocationservice";
 
     private BroadcastReceiver broadcastReceiver;
-    private RecyclerAdapter mRecyclerAdapter;
-    private final ArrayList<DataModel> locations = new ArrayList<>();
+    private RecyclerAdapter locationAdapter;
+    private ArrayList<DataModel> locations = new ArrayList<>();
 
     private final Gson gson = new Gson();
 
@@ -45,17 +43,16 @@ public class MainActivity extends AppCompatActivity {
 
         SharedPref.init(getApplicationContext());
 
-        String latitude = SharedPref.read(SharedPref.LATITUDE, null);
-        String longitude = SharedPref.read(SharedPref.LONGITUDE, null);
-
         RecyclerView mRecyclerView = findViewById(R.id.recycler_set_coordinates_main_activity);
-        mRecyclerAdapter = new RecyclerAdapter(locations);
+        locationAdapter = new RecyclerAdapter(locations);
+        if (loadLocations() != null) {
+            locations = loadLocations();
+            locationAdapter.notifyData(locations);
+        }
         final LinearLayoutManager layoutManager = new LinearLayoutManager(this);
         layoutManager.setOrientation(LinearLayoutManager.VERTICAL);
         mRecyclerView.setLayoutManager(layoutManager);
-        DataModel obj1 = new DataModel(latitude, longitude);
-        locations.add(obj1);
-        mRecyclerView.setAdapter(mRecyclerAdapter);
+        mRecyclerView.setAdapter(locationAdapter);
 
         if (grantPermission()) {
             if (checkLocationEnableOrNot()) {
@@ -66,9 +63,9 @@ public class MainActivity extends AppCompatActivity {
                     startService(intent);
                 }
             } else new AlertDialog.Builder(this)
-                    .setTitle("Provide permissions for working and restart application!")
+                    .setTitle(R.string.alert)
                     .setCancelable(false)
-                    .setPositiveButton("OK", (dialog, which) -> grantPermission()).setNegativeButton("CANCEL", null)
+                    .setPositiveButton(R.string.ok, (dialog, which) -> grantPermission()).setNegativeButton(R.string.cancel, null)
                     .show();
         }
 
@@ -78,18 +75,15 @@ public class MainActivity extends AppCompatActivity {
             public void onReceive(Context context, Intent intent) {
                 double latitude = intent.getDoubleExtra(PARAM_LATITUDE, 0);
                 double longitude = intent.getDoubleExtra(PARAM_LONGITUDE, 0);
-                Log.d(LOG_TAG, "onReceive: Lati = " + latitude + ", Longi = " + longitude);
-                SharedPref.write(SharedPref.LATITUDE, "" + latitude);
-                SharedPref.write(SharedPref.LONGITUDE, "" + longitude);
-                String x = "" + latitude;
-                String y = "" + longitude;
+                String lati = "" + latitude;
+                String longi = "" + longitude;
 
                 if (locations.size() <= 50) {
-                    DataModel obj = new DataModel(x, y);
+                    DataModel obj = new DataModel(lati, longi);
                     locations.add(obj);
                 } else {
                     locations.remove(1);
-                    DataModel obj = new DataModel(x, y);
+                    DataModel obj = new DataModel(lati, longi);
                     locations.add(obj);
                 }
                 locationAdapter.notifyData(locations);
@@ -139,8 +133,27 @@ private boolean checkLocationEnableOrNot() {
     }
 
     @Override
+    protected void onStop() {
+        super.onStop();
+        saveLocations();
+        if (!checkLocationEnableOrNot()) {
+            stopService(new Intent(this, LocationService.class));
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (loadLocations() != null) {
+            locations = loadLocations();
+            locationAdapter.notifyData(locations);
+        }
+    }
+
+    @Override
     protected void onPause() {
         super.onPause();
+        saveLocations();
         if (!checkLocationEnableOrNot()) {
             stopService(new Intent(this, LocationService.class));
         }
@@ -149,6 +162,7 @@ private boolean checkLocationEnableOrNot() {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        saveLocations();
         unregisterReceiver(broadcastReceiver);
         if (!checkLocationEnableOrNot()) {
             stopService(new Intent(this, LocationService.class));

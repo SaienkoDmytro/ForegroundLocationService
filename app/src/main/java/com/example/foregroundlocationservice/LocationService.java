@@ -13,7 +13,6 @@ import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -22,9 +21,7 @@ import androidx.core.app.NotificationCompat;
 
 public class LocationService extends Service implements LocationListener {
 
-    private static final String TAG = "LocationService";
     private static final String CHANNEL_ID = "my_channel_01";
-    final String LOG_TAG = "myLogs";
 
     @Nullable
     @Override
@@ -35,19 +32,18 @@ public class LocationService extends Service implements LocationListener {
     @Override
     public void onCreate() {
         super.onCreate();
-        Log.d(LOG_TAG, "MyService onCreate");
 
         if (Build.VERSION.SDK_INT >= 26) {
             NotificationChannel channel = new NotificationChannel(CHANNEL_ID,
-                    "My Channel",
+                    getApplicationContext().getString(R.string.channel),
                     NotificationManager.IMPORTANCE_DEFAULT);
 
             ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).createNotificationChannel(channel);
 
             Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
-                    .setContentTitle("Service")
+                    .setContentTitle(getApplicationContext().getString(R.string.service))
                     .setSmallIcon(R.drawable.ic_notification)
-                    .setContentText("Created")
+                    .setContentText("")
                     .build();
 
             startForeground(1, notification);
@@ -63,7 +59,7 @@ public class LocationService extends Service implements LocationListener {
                 PendingIntent.FLAG_UPDATE_CURRENT);
 
         Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle("Coordinates")
+                .setContentTitle(getString(R.string.coordinates))
                 .setContentText(lati + " " + longi)
                 .setContentIntent(resultPendingIntent)
                 .setSmallIcon(R.drawable.ic_notification)
@@ -75,7 +71,6 @@ public class LocationService extends Service implements LocationListener {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d(TAG, "onStartCommand: called.");
         getLocation();
 
         return START_NOT_STICKY;
@@ -122,7 +117,6 @@ public class LocationService extends Service implements LocationListener {
 
     public void onDestroy() {
         super.onDestroy();
-        Log.d(LOG_TAG, "MyService onDestroy");
     }
 
     /* checking distance difference

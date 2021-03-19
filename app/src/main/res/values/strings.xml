@@ -7,5 +7,11 @@
     <string name="latitude">latitude</string>
     <string name="longitude">longitude</string>
     <string name="alertstart">Permissions not granted!</string>
+    <string name="alert">Provide permissions for working and restart application!</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="service">Service</string>
+    <string name="channel">My Channel</string>
+    <string name="coordinates">Coordinates</string>
 
 </resources>

@@ -7,8 +7,6 @@ import android.content.SharedPreferences;
 
 public class SharedPref {
     private static SharedPreferences mSharedPref;
-    public static final String LATITUDE = "LATI";
-    public static final String LONGITUDE = "LONGI";
 
     private SharedPref() {
     }
