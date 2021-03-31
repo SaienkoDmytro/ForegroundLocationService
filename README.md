@@ -1,6 +1,6 @@
 # ForegroundLocationService
 * ### Project Overview
-A small project to learn Foreground service and Locations API in Android. 
+A small project to learn Foreground service, Broadcast receiver and Locations API in Android. 
 Ask the user for all permissions, activate service if on the background make notifications on location changes, on usage update coordinates with BroadcastReceiver in RecyclerView. 
 Saving locations in SharedPreferances. Stop service on GPS unable. 
 * ### Configuration instructions
